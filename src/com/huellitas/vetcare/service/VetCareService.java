@@ -7,20 +7,14 @@ import com.huellitas.vetcare.model.RegistroClinico;
 import com.huellitas.vetcare.persistence.CsvDatabase;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class VetCareService {
-    private final List<Cliente> clientes = new ArrayList<>();
-    private final List<Mascota> mascotas = new ArrayList<>();
-    private final List<Cita> citas = new ArrayList<>();
-    private final List<RegistroClinico> registros = new ArrayList<>();
-    private final CsvDatabase database = new CsvDatabase();
+    private ArrayList<Cliente> clientes = new ArrayList<Cliente>();
+    private ArrayList<Mascota> mascotas = new ArrayList<Mascota>();
+    private ArrayList<Cita> citas = new ArrayList<Cita>();
+    private ArrayList<RegistroClinico> registros = new ArrayList<RegistroClinico>();
+    private CsvDatabase database = new CsvDatabase();
 
     public VetCareService() {
         cargar();
@@ -43,18 +37,18 @@ public class VetCareService {
         return mascota;
     }
 
-    public Cita agendarCita(int mascotaId, LocalDateTime fechaHora, String motivo) {
-        Cita cita = new Cita(siguienteIdCitas(), mascotaId, fechaHora, validarTexto(motivo, "motivo"), Cita.Estado.PROGRAMADA);
+    public Cita agendarCita(int mascotaId, String fecha, String hora, String motivo) {
+        Cita cita = new Cita(siguienteIdCitas(), mascotaId, validarTexto(fecha, "fecha"), validarTexto(hora, "hora"), validarTexto(motivo, "motivo"), "PROGRAMADA");
         citas.add(cita);
         guardarSilencioso();
         return cita;
     }
 
-    public RegistroClinico agregarRegistroClinico(int mascotaId, LocalDate fecha, String diagnostico, String tratamiento, String observaciones) {
+    public RegistroClinico agregarRegistroClinico(int mascotaId, String fecha, String diagnostico, String tratamiento, String observaciones) {
         RegistroClinico registro = new RegistroClinico(
                 siguienteIdRegistros(),
                 mascotaId,
-                fecha,
+                validarTexto(fecha, "fecha"),
                 validarTexto(diagnostico, "diagnostico"),
                 tratamiento.trim(),
                 observaciones.trim()
@@ -64,46 +58,81 @@ public class VetCareService {
         return registro;
     }
 
-    public void actualizarEstadoCita(int citaId, Cita.Estado estado) {
-        Cita cita = buscarCita(citaId).orElseThrow(() -> new IllegalArgumentException("No existe una cita con el ID indicado."));
+    public void actualizarEstadoCita(int citaId, String estado) {
+        Cita cita = buscarCita(citaId);
+        if (cita == null) {
+            throw new IllegalArgumentException("No existe una cita con el ID indicado.");
+        }
         cita.setEstado(estado);
         guardarSilencioso();
     }
 
-    public List<Cliente> getClientes() {
-        return new ArrayList<>(clientes);
+    public ArrayList<Cliente> getClientes() {
+        return new ArrayList<Cliente>(clientes);
     }
 
-    public List<Mascota> getMascotas() {
-        return new ArrayList<>(mascotas);
+    public ArrayList<Mascota> getMascotas() {
+        return new ArrayList<Mascota>(mascotas);
     }
 
-    public List<Cita> getCitas() {
-        return new ArrayList<>(citas);
+    public ArrayList<Cita> getCitas() {
+        return new ArrayList<Cita>(citas);
     }
 
-    public List<RegistroClinico> getRegistros() {
-        return new ArrayList<>(registros);
+    public ArrayList<RegistroClinico> getRegistros() {
+        return new ArrayList<RegistroClinico>(registros);
     }
 
-    public List<Mascota> getMascotasPorCliente(int clienteId) {
-        return mascotas.stream().filter(mascota -> mascota.getClienteId() == clienteId).collect(Collectors.toList());
+    public ArrayList<Mascota> getMascotasPorCliente(int clienteId) {
+        ArrayList<Mascota> resultado = new ArrayList<Mascota>();
+        for (int i = 0; i < mascotas.size(); i++) {
+            Mascota mascota = mascotas.get(i);
+            if (mascota.getClienteId() == clienteId) {
+                resultado.add(mascota);
+            }
+        }
+        return resultado;
     }
 
-    public List<RegistroClinico> getRegistrosPorMascota(int mascotaId) {
-        return registros.stream().filter(registro -> registro.getMascotaId() == mascotaId).collect(Collectors.toList());
+    public ArrayList<RegistroClinico> getRegistrosPorMascota(int mascotaId) {
+        ArrayList<RegistroClinico> resultado = new ArrayList<RegistroClinico>();
+        for (int i = 0; i < registros.size(); i++) {
+            RegistroClinico registro = registros.get(i);
+            if (registro.getMascotaId() == mascotaId) {
+                resultado.add(registro);
+            }
+        }
+        return resultado;
     }
 
-    public Optional<Cliente> buscarCliente(int id) {
-        return clientes.stream().filter(cliente -> cliente.getId() == id).findFirst();
+    public Cliente buscarCliente(int id) {
+        for (int i = 0; i < clientes.size(); i++) {
+            Cliente cliente = clientes.get(i);
+            if (cliente.getId() == id) {
+                return cliente;
+            }
+        }
+        return null;
     }
 
-    public Optional<Mascota> buscarMascota(int id) {
-        return mascotas.stream().filter(mascota -> mascota.getId() == id).findFirst();
+    public Mascota buscarMascota(int id) {
+        for (int i = 0; i < mascotas.size(); i++) {
+            Mascota mascota = mascotas.get(i);
+            if (mascota.getId() == id) {
+                return mascota;
+            }
+        }
+        return null;
     }
 
-    public Optional<Cita> buscarCita(int id) {
-        return citas.stream().filter(cita -> cita.getId() == id).findFirst();
+    public Cita buscarCita(int id) {
+        for (int i = 0; i < citas.size(); i++) {
+            Cita cita = citas.get(i);
+            if (cita.getId() == id) {
+                return cita;
+            }
+        }
+        return null;
     }
 
     public void guardar() throws IOException {
@@ -117,7 +146,9 @@ public class VetCareService {
             mascotas.addAll(dataSet.getMascotas());
             citas.addAll(dataSet.getCitas());
             registros.addAll(dataSet.getRegistros());
-        } catch (IOException | RuntimeException ex) {
+        } catch (IOException ex) {
+            System.err.println("No fue posible cargar los datos: " + ex.getMessage());
+        } catch (RuntimeException ex) {
             System.err.println("No fue posible cargar los datos: " + ex.getMessage());
         }
     }
@@ -138,22 +169,42 @@ public class VetCareService {
     }
 
     private int siguienteIdClientes() {
-        return siguienteId(clientes.stream().map(Cliente::getId).collect(Collectors.toList()));
+        int mayor = 0;
+        for (int i = 0; i < clientes.size(); i++) {
+            if (clientes.get(i).getId() > mayor) {
+                mayor = clientes.get(i).getId();
+            }
+        }
+        return mayor + 1;
     }
 
     private int siguienteIdMascotas() {
-        return siguienteId(mascotas.stream().map(Mascota::getId).collect(Collectors.toList()));
+        int mayor = 0;
+        for (int i = 0; i < mascotas.size(); i++) {
+            if (mascotas.get(i).getId() > mayor) {
+                mayor = mascotas.get(i).getId();
+            }
+        }
+        return mayor + 1;
     }
 
     private int siguienteIdCitas() {
-        return siguienteId(citas.stream().map(Cita::getId).collect(Collectors.toList()));
+        int mayor = 0;
+        for (int i = 0; i < citas.size(); i++) {
+            if (citas.get(i).getId() > mayor) {
+                mayor = citas.get(i).getId();
+            }
+        }
+        return mayor + 1;
     }
 
     private int siguienteIdRegistros() {
-        return siguienteId(registros.stream().map(RegistroClinico::getId).collect(Collectors.toList()));
-    }
-
-    private int siguienteId(List<Integer> ids) {
-        return ids.stream().max(Comparator.naturalOrder()).orElse(0) + 1;
+        int mayor = 0;
+        for (int i = 0; i < registros.size(); i++) {
+            if (registros.get(i).getId() > mayor) {
+                mayor = registros.get(i).getId();
+            }
+        }
+        return mayor + 1;
     }
 }

@@ -6,6 +6,11 @@ import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new VetCareFrame().setVisible(true));
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                VetCareFrame ventana = new VetCareFrame();
+                ventana.setVisible(true);
+            }
+        });
     }
 }

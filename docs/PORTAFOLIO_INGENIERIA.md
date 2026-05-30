@@ -105,16 +105,16 @@ classDiagram
     class Cita {
         -int id
         -int mascotaId
-        -LocalDateTime fechaHora
+        -String fecha
+        -String hora
         -String motivo
-        -Estado estado
-        +getFechaFormateada() String
+        -String estado
     }
 
     class RegistroClinico {
         -int id
         -int mascotaId
-        -LocalDate fecha
+        -String fecha
         -String diagnostico
         -String tratamiento
         -String observaciones

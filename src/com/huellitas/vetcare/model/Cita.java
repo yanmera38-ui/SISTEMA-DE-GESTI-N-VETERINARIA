@@ -1,27 +1,18 @@
 package com.huellitas.vetcare.model;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 public class Cita {
-    public enum Estado {
-        PROGRAMADA,
-        ATENDIDA,
-        CANCELADA
-    }
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-    private final int id;
-    private final int mascotaId;
-    private LocalDateTime fechaHora;
+    private int id;
+    private int mascotaId;
+    private String fecha;
+    private String hora;
     private String motivo;
-    private Estado estado;
+    private String estado;
 
-    public Cita(int id, int mascotaId, LocalDateTime fechaHora, String motivo, Estado estado) {
+    public Cita(int id, int mascotaId, String fecha, String hora, String motivo, String estado) {
         this.id = id;
         this.mascotaId = mascotaId;
-        this.fechaHora = fechaHora;
+        this.fecha = fecha;
+        this.hora = hora;
         this.motivo = motivo;
         this.estado = estado;
     }
@@ -34,12 +25,20 @@ public class Cita {
         return mascotaId;
     }
 
-    public LocalDateTime getFechaHora() {
-        return fechaHora;
+    public String getFecha() {
+        return fecha;
     }
 
-    public void setFechaHora(LocalDateTime fechaHora) {
-        this.fechaHora = fechaHora;
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
+    }
+
+    public String getHora() {
+        return hora;
+    }
+
+    public void setHora(String hora) {
+        this.hora = hora;
     }
 
     public String getMotivo() {
@@ -50,15 +49,11 @@ public class Cita {
         this.motivo = motivo;
     }
 
-    public Estado getEstado() {
+    public String getEstado() {
         return estado;
     }
 
-    public void setEstado(Estado estado) {
+    public void setEstado(String estado) {
         this.estado = estado;
-    }
-
-    public String getFechaFormateada() {
-        return fechaHora.format(FORMATTER);
     }
 }

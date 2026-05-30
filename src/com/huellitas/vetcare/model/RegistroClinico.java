@@ -1,16 +1,19 @@
 package com.huellitas.vetcare.model;
 
-import java.time.LocalDate;
-
 public class RegistroClinico {
-    private final int id;
-    private final int mascotaId;
-    private LocalDate fecha;
+
+    private int id;
+    private int mascotaId;
+    private String fecha;
     private String diagnostico;
     private String tratamiento;
     private String observaciones;
 
-    public RegistroClinico(int id, int mascotaId, LocalDate fecha, String diagnostico, String tratamiento, String observaciones) {
+    public RegistroClinico(int id, int mascotaId, String fecha,
+                           String diagnostico,
+                           String tratamiento,
+                           String observaciones) {
+
         this.id = id;
         this.mascotaId = mascotaId;
         this.fecha = fecha;
@@ -27,11 +30,11 @@ public class RegistroClinico {
         return mascotaId;
     }
 
-    public LocalDate getFecha() {
+    public String getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
+    public void setFecha(String fecha) {
         this.fecha = fecha;
     }
 

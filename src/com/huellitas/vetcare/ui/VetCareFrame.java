@@ -23,23 +23,21 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class VetCareFrame extends JFrame {
-    private static final DateTimeFormatter CITA_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private VetCareService service = new VetCareService();
+    private DefaultTableModel clientesModel = model("ID", "Nombre", "Telefono", "Direccion");
+    private DefaultTableModel mascotasModel = model("ID", "Dueno", "Nombre", "Especie", "Raza", "Edad");
+    private DefaultTableModel citasModel = model("ID", "Mascota", "Fecha", "Hora", "Motivo", "Estado");
+    private DefaultTableModel historialModel = model("ID", "Mascota", "Fecha", "Diagnostico", "Tratamiento", "Observaciones");
 
-    private final VetCareService service = new VetCareService();
-    private final DefaultTableModel clientesModel = model("ID", "Nombre", "Telefono", "Direccion");
-    private final DefaultTableModel mascotasModel = model("ID", "Dueno", "Nombre", "Especie", "Raza", "Edad");
-    private final DefaultTableModel citasModel = model("ID", "Mascota", "Fecha y hora", "Motivo", "Estado");
-    private final DefaultTableModel historialModel = model("ID", "Mascota", "Fecha", "Diagnostico", "Tratamiento", "Observaciones");
-
-    private final JComboBox<Cliente> clienteMascotaCombo = new JComboBox<>();
-    private final JComboBox<Mascota> mascotaCitaCombo = new JComboBox<>();
-    private final JComboBox<Mascota> mascotaHistorialCombo = new JComboBox<>();
-    private final JComboBox<Cita.Estado> estadoCitaCombo = new JComboBox<>(Cita.Estado.values());
+    private JComboBox<Cliente> clienteMascotaCombo = new JComboBox<Cliente>();
+    private JComboBox<Mascota> mascotaCitaCombo = new JComboBox<Mascota>();
+    private JComboBox<Mascota> mascotaHistorialCombo = new JComboBox<Mascota>();
+    private JComboBox<String> estadoCitaCombo = new JComboBox<String>(new String[]{"PROGRAMADA", "ATENDIDA", "CANCELADA"});
 
     public VetCareFrame() {
         setTitle("VetCare - Clinica Veterinaria Huellitas");
@@ -58,9 +56,9 @@ public class VetCareFrame extends JFrame {
     }
 
     private JPanel crearPanelClientes() {
-        JTextField nombre = new JTextField(18);
-        JTextField telefono = new JTextField(18);
-        JTextField direccion = new JTextField(18);
+        final JTextField nombre = new JTextField(18);
+        final JTextField telefono = new JTextField(18);
+        final JTextField direccion = new JTextField(18);
         JButton registrar = new JButton("Registrar cliente");
 
         JPanel form = formulario();
@@ -69,16 +67,18 @@ public class VetCareFrame extends JFrame {
         agregarCampo(form, 2, "Direccion", direccion);
         agregarControl(form, 3, registrar);
 
-        registrar.addActionListener(event -> {
-            try {
-                service.registrarCliente(nombre.getText(), telefono.getText(), direccion.getText());
-                limpiar(nombre, telefono, direccion);
-                refrescarTodo();
-                mensaje("Cliente registrado correctamente.");
-            } catch (IllegalArgumentException ex) {
-                error(ex.getMessage());
-            } catch (Exception ex) {
-                error("No fue posible registrar el cliente: " + ex.getMessage());
+        registrar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    service.registrarCliente(nombre.getText(), telefono.getText(), direccion.getText());
+                    limpiar(nombre, telefono, direccion);
+                    refrescarTodo();
+                    mensaje("Cliente registrado correctamente.");
+                } catch (IllegalArgumentException ex) {
+                    error(ex.getMessage());
+                } catch (Exception ex) {
+                    error("No fue posible registrar el cliente: " + ex.getMessage());
+                }
             }
         });
 
@@ -86,10 +86,10 @@ public class VetCareFrame extends JFrame {
     }
 
     private JPanel crearPanelMascotas() {
-        JTextField nombre = new JTextField(18);
-        JTextField especie = new JTextField(18);
-        JTextField raza = new JTextField(18);
-        JTextField edad = new JTextField(18);
+        final JTextField nombre = new JTextField(18);
+        final JTextField especie = new JTextField(18);
+        final JTextField raza = new JTextField(18);
+        final JTextField edad = new JTextField(18);
         JButton registrar = new JButton("Registrar mascota");
 
         JPanel form = formulario();
@@ -100,23 +100,25 @@ public class VetCareFrame extends JFrame {
         agregarCampo(form, 4, "Edad", edad);
         agregarControl(form, 5, registrar);
 
-        registrar.addActionListener(event -> {
-            try {
-                Cliente cliente = (Cliente) clienteMascotaCombo.getSelectedItem();
-                if (cliente == null) {
-                    throw new IllegalArgumentException("Debe registrar o seleccionar un dueno.");
+        registrar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    Cliente cliente = (Cliente) clienteMascotaCombo.getSelectedItem();
+                    if (cliente == null) {
+                        throw new IllegalArgumentException("Debe registrar o seleccionar un dueno.");
+                    }
+                    int edadValor = Integer.parseInt(edad.getText().trim());
+                    service.registrarMascota(cliente.getId(), nombre.getText(), especie.getText(), raza.getText(), edadValor);
+                    limpiar(nombre, especie, raza, edad);
+                    refrescarTodo();
+                    mensaje("Mascota registrada correctamente.");
+                } catch (NumberFormatException ex) {
+                    error("La edad debe ser un numero entero.");
+                } catch (IllegalArgumentException ex) {
+                    error(ex.getMessage());
+                } catch (Exception ex) {
+                    error("No fue posible registrar la mascota: " + ex.getMessage());
                 }
-                int edadValor = Integer.parseInt(edad.getText().trim());
-                service.registrarMascota(cliente.getId(), nombre.getText(), especie.getText(), raza.getText(), edadValor);
-                limpiar(nombre, especie, raza, edad);
-                refrescarTodo();
-                mensaje("Mascota registrada correctamente.");
-            } catch (NumberFormatException ex) {
-                error("La edad debe ser un numero entero.");
-            } catch (IllegalArgumentException ex) {
-                error(ex.getMessage());
-            } catch (Exception ex) {
-                error("No fue posible registrar la mascota: " + ex.getMessage());
             }
         });
 
@@ -124,53 +126,56 @@ public class VetCareFrame extends JFrame {
     }
 
     private JPanel crearPanelCitas() {
-        JTextField fecha = new JTextField("2026-05-23 09:00", 18);
-        JTextField motivo = new JTextField(18);
-        JTextField citaId = new JTextField(8);
+        final JTextField fecha = new JTextField("2026-05-30", 18);
+        final JTextField hora = new JTextField("09:00", 18);
+        final JTextField motivo = new JTextField(18);
+        final JTextField citaId = new JTextField(8);
         JButton agendar = new JButton("Agendar cita");
         JButton actualizar = new JButton("Actualizar estado");
 
         JPanel form = formulario();
         agregarCampo(form, 0, "Mascota", mascotaCitaCombo);
-        agregarCampo(form, 1, "Fecha y hora", fecha);
-        agregarCampo(form, 2, "Motivo", motivo);
-        agregarControl(form, 3, agendar);
-        agregarCampo(form, 4, "ID cita", citaId);
-        agregarCampo(form, 5, "Estado", estadoCitaCombo);
-        agregarControl(form, 6, actualizar);
+        agregarCampo(form, 1, "Fecha", fecha);
+        agregarCampo(form, 2, "Hora", hora);
+        agregarCampo(form, 3, "Motivo", motivo);
+        agregarControl(form, 4, agendar);
+        agregarCampo(form, 5, "ID cita", citaId);
+        agregarCampo(form, 6, "Estado", estadoCitaCombo);
+        agregarControl(form, 7, actualizar);
 
-        agendar.addActionListener(event -> {
-            try {
-                Mascota mascota = (Mascota) mascotaCitaCombo.getSelectedItem();
-                if (mascota == null) {
-                    throw new IllegalArgumentException("Debe registrar o seleccionar una mascota.");
+        agendar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    Mascota mascota = (Mascota) mascotaCitaCombo.getSelectedItem();
+                    if (mascota == null) {
+                        throw new IllegalArgumentException("Debe registrar o seleccionar una mascota.");
+                    }
+                    service.agendarCita(mascota.getId(), fecha.getText(), hora.getText(), motivo.getText());
+                    motivo.setText("");
+                    refrescarTodo();
+                    mensaje("Cita agendada correctamente.");
+                } catch (IllegalArgumentException ex) {
+                    error(ex.getMessage());
+                } catch (Exception ex) {
+                    error("No fue posible agendar la cita: " + ex.getMessage());
                 }
-                LocalDateTime fechaHora = LocalDateTime.parse(fecha.getText().trim(), CITA_FORMATTER);
-                service.agendarCita(mascota.getId(), fechaHora, motivo.getText());
-                motivo.setText("");
-                refrescarTodo();
-                mensaje("Cita agendada correctamente.");
-            } catch (java.time.format.DateTimeParseException ex) {
-                error("Use el formato de fecha yyyy-MM-dd HH:mm.");
-            } catch (IllegalArgumentException ex) {
-                error(ex.getMessage());
-            } catch (Exception ex) {
-                error("No fue posible agendar la cita: " + ex.getMessage());
             }
         });
 
-        actualizar.addActionListener(event -> {
-            try {
-                int id = Integer.parseInt(citaId.getText().trim());
-                Cita.Estado estado = (Cita.Estado) estadoCitaCombo.getSelectedItem();
-                service.actualizarEstadoCita(id, estado);
-                citaId.setText("");
-                refrescarTodo();
-                mensaje("Estado actualizado.");
-            } catch (NumberFormatException ex) {
-                error("El ID de la cita debe ser numerico.");
-            } catch (Exception ex) {
-                error("No fue posible actualizar la cita: " + ex.getMessage());
+        actualizar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    int id = Integer.parseInt(citaId.getText().trim());
+                    String estado = (String) estadoCitaCombo.getSelectedItem();
+                    service.actualizarEstadoCita(id, estado);
+                    citaId.setText("");
+                    refrescarTodo();
+                    mensaje("Estado actualizado.");
+                } catch (NumberFormatException ex) {
+                    error("El ID de la cita debe ser numerico.");
+                } catch (Exception ex) {
+                    error("No fue posible actualizar la cita: " + ex.getMessage());
+                }
             }
         });
 
@@ -178,10 +183,10 @@ public class VetCareFrame extends JFrame {
     }
 
     private JPanel crearPanelHistorial() {
-        JTextField fecha = new JTextField(LocalDate.now().toString(), 18);
-        JTextField diagnostico = new JTextField(18);
-        JTextField tratamiento = new JTextField(18);
-        JTextArea observaciones = new JTextArea(3, 18);
+        final JTextField fecha = new JTextField("2026-05-30", 18);
+        final JTextField diagnostico = new JTextField(18);
+        final JTextField tratamiento = new JTextField(18);
+        final JTextArea observaciones = new JTextArea(3, 18);
         JButton guardar = new JButton("Guardar registro");
 
         JPanel form = formulario();
@@ -192,24 +197,23 @@ public class VetCareFrame extends JFrame {
         agregarCampo(form, 4, "Observaciones", new JScrollPane(observaciones));
         agregarControl(form, 5, guardar);
 
-        guardar.addActionListener(event -> {
-            try {
-                Mascota mascota = (Mascota) mascotaHistorialCombo.getSelectedItem();
-                if (mascota == null) {
-                    throw new IllegalArgumentException("Debe registrar o seleccionar una mascota.");
+        guardar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    Mascota mascota = (Mascota) mascotaHistorialCombo.getSelectedItem();
+                    if (mascota == null) {
+                        throw new IllegalArgumentException("Debe registrar o seleccionar una mascota.");
+                    }
+                    service.agregarRegistroClinico(mascota.getId(), fecha.getText(), diagnostico.getText(), tratamiento.getText(), observaciones.getText());
+                    limpiar(diagnostico, tratamiento);
+                    observaciones.setText("");
+                    refrescarTodo();
+                    mensaje("Registro clinico guardado.");
+                } catch (IllegalArgumentException ex) {
+                    error(ex.getMessage());
+                } catch (Exception ex) {
+                    error("No fue posible guardar el historial: " + ex.getMessage());
                 }
-                LocalDate fechaRegistro = LocalDate.parse(fecha.getText().trim());
-                service.agregarRegistroClinico(mascota.getId(), fechaRegistro, diagnostico.getText(), tratamiento.getText(), observaciones.getText());
-                limpiar(diagnostico, tratamiento);
-                observaciones.setText("");
-                refrescarTodo();
-                mensaje("Registro clinico guardado.");
-            } catch (java.time.format.DateTimeParseException ex) {
-                error("Use el formato de fecha yyyy-MM-dd.");
-            } catch (IllegalArgumentException ex) {
-                error(ex.getMessage());
-            } catch (Exception ex) {
-                error("No fue posible guardar el historial: " + ex.getMessage());
             }
         });
 
@@ -226,31 +230,51 @@ public class VetCareFrame extends JFrame {
 
     private void cargarClientes() {
         clientesModel.setRowCount(0);
-        for (Cliente cliente : service.getClientes()) {
+        ArrayList<Cliente> clientes = service.getClientes();
+        for (int i = 0; i < clientes.size(); i++) {
+            Cliente cliente = clientes.get(i);
             clientesModel.addRow(new Object[]{cliente.getId(), cliente.getNombre(), cliente.getTelefono(), cliente.getDireccion()});
         }
     }
 
     private void cargarMascotas() {
         mascotasModel.setRowCount(0);
-        for (Mascota mascota : service.getMascotas()) {
-            String dueno = service.buscarCliente(mascota.getClienteId()).map(Cliente::getNombre).orElse("Sin dueno");
+        ArrayList<Mascota> mascotas = service.getMascotas();
+        for (int i = 0; i < mascotas.size(); i++) {
+            Mascota mascota = mascotas.get(i);
+            Cliente cliente = service.buscarCliente(mascota.getClienteId());
+            String dueno = "Sin dueno";
+            if (cliente != null) {
+                dueno = cliente.getNombre();
+            }
             mascotasModel.addRow(new Object[]{mascota.getId(), dueno, mascota.getNombre(), mascota.getEspecie(), mascota.getRaza(), mascota.getEdad()});
         }
     }
 
     private void cargarCitas() {
         citasModel.setRowCount(0);
-        for (Cita cita : service.getCitas()) {
-            String mascota = service.buscarMascota(cita.getMascotaId()).map(Mascota::getNombre).orElse("Sin mascota");
-            citasModel.addRow(new Object[]{cita.getId(), mascota, cita.getFechaFormateada(), cita.getMotivo(), cita.getEstado()});
+        ArrayList<Cita> citas = service.getCitas();
+        for (int i = 0; i < citas.size(); i++) {
+            Cita cita = citas.get(i);
+            Mascota mascotaEncontrada = service.buscarMascota(cita.getMascotaId());
+            String mascota = "Sin mascota";
+            if (mascotaEncontrada != null) {
+                mascota = mascotaEncontrada.getNombre();
+            }
+            citasModel.addRow(new Object[]{cita.getId(), mascota, cita.getFecha(), cita.getHora(), cita.getMotivo(), cita.getEstado()});
         }
     }
 
     private void cargarHistorial() {
         historialModel.setRowCount(0);
-        for (RegistroClinico registro : service.getRegistros()) {
-            String mascota = service.buscarMascota(registro.getMascotaId()).map(Mascota::getNombre).orElse("Sin mascota");
+        ArrayList<RegistroClinico> registros = service.getRegistros();
+        for (int i = 0; i < registros.size(); i++) {
+            RegistroClinico registro = registros.get(i);
+            Mascota mascotaEncontrada = service.buscarMascota(registro.getMascotaId());
+            String mascota = "Sin mascota";
+            if (mascotaEncontrada != null) {
+                mascota = mascotaEncontrada.getNombre();
+            }
             historialModel.addRow(new Object[]{
                     registro.getId(),
                     mascota,
@@ -264,12 +288,16 @@ public class VetCareFrame extends JFrame {
 
     private void cargarCombos() {
         clienteMascotaCombo.removeAllItems();
-        for (Cliente cliente : service.getClientes()) {
-            clienteMascotaCombo.addItem(cliente);
+        ArrayList<Cliente> clientes = service.getClientes();
+        for (int i = 0; i < clientes.size(); i++) {
+            clienteMascotaCombo.addItem(clientes.get(i));
         }
+
         mascotaCitaCombo.removeAllItems();
         mascotaHistorialCombo.removeAllItems();
-        for (Mascota mascota : service.getMascotas()) {
+        ArrayList<Mascota> mascotas = service.getMascotas();
+        for (int i = 0; i < mascotas.size(); i++) {
+            Mascota mascota = mascotas.get(i);
             mascotaCitaCombo.addItem(mascota);
             mascotaHistorialCombo.addItem(mascota);
         }
@@ -317,7 +345,6 @@ public class VetCareFrame extends JFrame {
 
     private DefaultTableModel model(String... columnas) {
         return new DefaultTableModel(columnas, 0) {
-            @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -325,8 +352,8 @@ public class VetCareFrame extends JFrame {
     }
 
     private void limpiar(JTextField... campos) {
-        for (JTextField campo : campos) {
-            campo.setText("");
+        for (int i = 0; i < campos.length; i++) {
+            campos[i].setText("");
         }
     }
 
