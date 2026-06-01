@@ -6,3 +6,6 @@ data/
 arch.project.VetCare/
 arch.project.VetCare.zip
 SistemaDeGestiónVeterinaria/
+.idea/
+*.iml
+src/com/huellitas/vetcare/.idea/

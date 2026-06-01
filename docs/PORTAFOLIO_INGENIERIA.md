@@ -74,7 +74,6 @@ flowchart LR
 ```mermaid
 classDiagram
     class Persona {
-        <<abstract>>
         -int id
         -String nombre
         -String telefono

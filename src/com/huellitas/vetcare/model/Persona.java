@@ -1,6 +1,6 @@
 package com.huellitas.vetcare.model;
 
-public abstract class Persona {
+public class Persona {
     private final int id;
     private String nombre;
     private String telefono;
