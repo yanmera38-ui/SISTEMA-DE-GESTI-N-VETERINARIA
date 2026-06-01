@@ -5,7 +5,7 @@ public class Persona {
     private String nombre;
     private String telefono;
 
-    protected Persona(int id, String nombre, String telefono) {
+    public Persona(int id, String nombre, String telefono) {
         this.id = id;
         this.nombre = nombre;
         this.telefono = telefono;
